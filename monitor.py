@@ -65,7 +65,7 @@ def get_page_hash():
 # Ak chceš test, zmeň False na True,
 # spusti Actions a potom vráť späť na False
 
-TEST_MESSAGE = True
+TEST_MESSAGE = False
 
 
 if TEST_MESSAGE:
