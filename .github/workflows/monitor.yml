@@ -12,6 +12,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
 
     - name: Stiahnutie kodu
@@ -32,3 +35,12 @@ jobs:
     - name: Spustenie kontroly
       run: |
         python monitor.py
+
+
+    - name: Ulozenie noveho stavu
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "actions@github.com"
+        git add page_hash.txt
+        git commit -m "Aktualizacia stavu stranky" || exit 0
+        git push
