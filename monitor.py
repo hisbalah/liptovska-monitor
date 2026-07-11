@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import hashlib
-import os
 from datetime import datetime
+import os
 
 
 URL = "https://www.liptovskaosada.com/index.php/samosprava/uznesenia-a-zapisnice-oz/678-uznesenia-a-zapisnice-rok-2026"
@@ -14,9 +14,10 @@ HASH_FILE = "page_hash.txt"
 
 
 def send_telegram(message):
+
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-    requests.post(
+    r = requests.post(
         url,
         data={
             "chat_id": CHAT_ID,
@@ -24,6 +25,8 @@ def send_telegram(message):
         },
         timeout=20
     )
+
+    print("Telegram odpoveď:", r.text)
 
 
 def get_page_hash():
@@ -58,6 +61,25 @@ def get_page_hash():
     ).hexdigest()
 
 
+# ===== TEST TELEGRAMU =====
+# Ak chceš test, zmeň False na True,
+# spusti Actions a potom vráť späť na False
+
+TEST_MESSAGE = False
+
+
+if TEST_MESSAGE:
+
+    send_telegram(
+        "✅ TEST\n\n"
+        "Telegram bot pre Liptovskú Osadu funguje."
+    )
+
+    exit()
+
+
+# ===== KONTROLA STRÁNKY =====
+
 new_hash = get_page_hash()
 
 
@@ -71,12 +93,13 @@ else:
     old_hash = None
 
 
+
 if old_hash is None:
 
     with open(HASH_FILE, "w") as f:
         f.write(new_hash)
 
-    print("Prvé spustenie - uložený stav stránky.")
+    print("Prvý stav uložený.")
 
 
 elif old_hash != new_hash:
@@ -84,9 +107,9 @@ elif old_hash != new_hash:
     cas = datetime.now().strftime("%d.%m.%Y %H:%M")
 
     send_telegram(
-        "🔔 LIPTOVSKÁ OSADA - ZMENA\n\n"
-        "Na stránke uznesení a zápisníc bola zistená zmena.\n"
-        "Skontroluj nové zasadnutie alebo zápisnicu.\n\n"
+        "🔔 LIPTOVSKÁ OSADA - NOVÁ ZMENA\n\n"
+        "Na stránke pribudla zmena.\n"
+        "Môže ísť o nové uznesenia alebo zápisnicu.\n\n"
         f"Čas: {cas}\n\n"
         f"{URL}"
     )
@@ -94,9 +117,9 @@ elif old_hash != new_hash:
     with open(HASH_FILE, "w") as f:
         f.write(new_hash)
 
-    print("Zmena odoslaná na Telegram.")
+    print("Zmena nájdená.")
 
 
 else:
 
-    print("Žiadna zmena.")
+    print("Bez zmeny.")
