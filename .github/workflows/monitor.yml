@@ -13,13 +13,22 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: read
 
 
     steps:
 
     - name: Stiahnutie kodu
       uses: actions/checkout@v4
+
+
+    - name: Obnovenie ulozeneho stavu
+      uses: actions/cache@v4
+      with:
+        path: page_hash.txt
+        key: liptovska-hash-${{ github.run_id }}
+        restore-keys: |
+          liptovska-hash-
 
 
     - name: Nastavenie Pythonu
@@ -36,12 +45,3 @@ jobs:
     - name: Spustenie kontroly
       run: |
         python monitor.py
-
-
-    - name: Ulozenie noveho stavu
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add page_hash.txt
-        git commit -m "Update page hash" || echo "No changes to commit"
-        git push
