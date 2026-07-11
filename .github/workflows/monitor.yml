@@ -26,7 +26,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: page_hash.txt
-        key: liptovska-hash-${{ github.run_id }}
+        key: liptovska-hash
         restore-keys: |
           liptovska-hash-
 
