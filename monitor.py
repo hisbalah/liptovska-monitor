@@ -7,7 +7,7 @@ from datetime import datetime
 
 URL = "https://www.liptovskaosada.com/index.php/samosprava/uznesenia-a-zapisnice-oz/678-uznesenia-a-zapisnice-rok-2026"
 
-BOT_TOKEN = os.environ["8811690834:AAE5eiiiVXrwG1oIQF-2pCNP_Gx0MmqctY4"]
+BOT_TOKEN = "8811690834:AAE5eiiiVXrwG1oIQF-2pCNP_Gx0MmqctY4"
 CHAT_ID = "5691403626"
 
 HASH_FILE = "page_hash.txt"
