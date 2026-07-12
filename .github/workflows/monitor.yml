@@ -25,7 +25,7 @@ jobs:
     - name: Obnovenie ulozeneho stavu
       uses: actions/cache@v4
       with:
-        path: page_hash.txt
+        path: documents.json
         key: liptovska-hash
         restore-keys: |
           liptovska-hash-
