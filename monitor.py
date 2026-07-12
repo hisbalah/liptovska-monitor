@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-import hashlib
-from datetime import datetime
 import os
+import json
+from datetime import datetime
 
 
 URL = "https://www.liptovskaosada.com/index.php/samosprava/uznesenia-a-zapisnice-oz/678-uznesenia-a-zapisnice-rok-2026"
@@ -10,14 +10,14 @@ URL = "https://www.liptovskaosada.com/index.php/samosprava/uznesenia-a-zapisnice
 BOT_TOKEN = "8811690834:AAE5eiiiVXrwG1oIQF-2pCNP_Gx0MmqctY4"
 CHAT_ID = "5691403626"
 
-HASH_FILE = "page_hash.txt"
+FILE = "documents.json"
 
 
 def send_telegram(message):
 
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-    r = requests.post(
+    requests.post(
         url,
         data={
             "chat_id": CHAT_ID,
@@ -26,10 +26,8 @@ def send_telegram(message):
         timeout=20
     )
 
-    print("Telegram odpoveď:", r.text)
 
-
-def get_page_hash():
+def get_documents():
 
     headers = {
         "User-Agent": "Mozilla/5.0"
@@ -48,78 +46,123 @@ def get_page_hash():
         "html.parser"
     )
 
-    for tag in soup(["script", "style"]):
-        tag.decompose()
+    documents = []
 
-    text = soup.get_text(
-        " ",
-        strip=True
-    )
+    for a in soup.find_all("a", href=True):
 
-    return hashlib.sha256(
-        text.encode("utf-8")
-    ).hexdigest()
+        href = a["href"]
 
+        text = a.get_text(
+            " ",
+            strip=True
+        )
 
-# ===== TEST TELEGRAMU =====
-# Ak chceš test, zmeň False na True,
-# spusti Actions a potom vráť späť na False
+        if (
+            ".pdf" in href.lower()
+            or "zapis" in text.lower()
+            or "uznes" in text.lower()
+        ):
 
-TEST_MESSAGE = False
+            if href.startswith("/"):
+                href = "https://www.liptovskaosada.com" + href
 
-
-if TEST_MESSAGE:
-
-    send_telegram(
-        "✅ TEST\n\n"
-        "Telegram bot pre Liptovskú Osadu funguje."
-    )
-
-    exit()
+            documents.append(
+                {
+                    "name": text,
+                    "url": href
+                }
+            )
 
 
-# ===== KONTROLA STRÁNKY =====
-
-new_hash = get_page_hash()
+    return documents
 
 
-if os.path.exists(HASH_FILE):
 
-    with open(HASH_FILE, "r") as f:
-        old_hash = f.read()
+new_documents = get_documents()
+
+
+if os.path.exists(FILE):
+
+    with open(FILE, "r", encoding="utf-8") as f:
+        old_documents = json.load(f)
 
 else:
 
-    old_hash = None
+    old_documents = []
 
 
 
-if old_hash is None:
+old_urls = {
+    d["url"]
+    for d in old_documents
+}
 
-    with open(HASH_FILE, "w") as f:
-        f.write(new_hash)
+
+new_items = [
+    d
+    for d in new_documents
+    if d["url"] not in old_urls
+]
+
+
+
+if not old_documents:
+
+    with open(FILE, "w", encoding="utf-8") as f:
+        json.dump(
+            new_documents,
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
 
     print("Prvý stav uložený.")
 
 
-elif old_hash != new_hash:
 
-    cas = datetime.now().strftime("%d.%m.%Y %H:%M")
+elif new_items:
 
-    send_telegram(
-        "🔔 LIPTOVSKÁ OSADA - NOVÁ ZMENA\n\n"
-        "Na stránke pribudla zmena.\n"
-        "Môže ísť o nové uznesenia alebo zápisnicu.\n\n"
-        f"Čas: {cas}\n\n"
-        f"{URL}"
+    cas = datetime.now().strftime(
+        "%d.%m.%Y %H:%M"
     )
 
-    with open(HASH_FILE, "w") as f:
-        f.write(new_hash)
+    message = (
+        "🔔 LIPTOVSKÁ OSADA\n\n"
+        "Pribudol nový dokument:\n\n"
+    )
 
-    print("Zmena nájdená.")
+    for item in new_items:
+
+        message += (
+            "📄 "
+            + item["name"]
+            + "\n"
+            + item["url"]
+            + "\n\n"
+        )
+
+
+    message += "Čas: " + cas
+
+    send_telegram(message)
+
+
+    with open(FILE, "w", encoding="utf-8") as f:
+        json.dump(
+            new_documents,
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
+
+
+    print("Nový dokument odoslaný.")
+
 
 
 else:
 
-    print("Bez zmeny.")
+    print("Žiadny nový dokument.")
+
+
+
